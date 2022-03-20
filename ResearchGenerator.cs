@@ -8,7 +8,7 @@ namespace RogueTowerResearch
 {
     public class ResearchGenerator : MonoBehaviour
     {
-        public const int COST_OF_RESEARCH = 30;
+        public const int COST_OF_RESEARCH = 45;
 
         public House House;
         private IncomeGenerator _incomeGenerator;
