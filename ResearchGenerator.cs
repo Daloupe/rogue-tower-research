@@ -91,8 +91,6 @@ namespace RogueTowerResearch
                 _cardManager.GetAvailableCards().AddRange(_upgradeCard.unlocks);
                 SetResearch(null);
             }
-
-            House.SpawnUI();
         }
 
         public void CheckTowers()
