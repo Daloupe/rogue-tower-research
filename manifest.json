@@ -1,6 +1,6 @@
 {
 	"name": "RogueTowerResearch",
-	"version_number": "0.0.2",
+	"version_number": "0.0.3",
 	"website_url": "https://github.com/Daloupe/rogue-tower-research",
 	"description": "This mod allows you turn houses in to research labs",
 	"dependencies": [

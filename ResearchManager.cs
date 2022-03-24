@@ -2,24 +2,36 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 namespace RogueTowerResearch
 {
     public class ResearchManager : MonoBehaviour
     {
-        public readonly Dictionary<TowerType, TowerFlyweight> TowerFlyweights = new Dictionary<TowerType, TowerFlyweight>();
+        private readonly Dictionary<TowerType, TowerFlyweight> TowerFlyweights = new Dictionary<TowerType, TowerFlyweight>();
+        private readonly Dictionary<TowerType, Tower> TowerPrefabs = new Dictionary<TowerType, Tower>();
         private readonly Dictionary<int, ResearchGenerator> _researchGenerators = new Dictionary<int, ResearchGenerator>();
+        private SpawnManager _spawnManager;
         private CardManager _cardManager;
         private PauseMenu _pauseMenu;
 
         private void Awake()
         {
+            _spawnManager = FindObjectOfType<SpawnManager>();
             _cardManager = FindObjectOfType<CardManager>();
             _pauseMenu = FindObjectOfType<PauseMenu>();
             foreach (var flyweight in FindObjectsOfType<TowerFlyweight>())
             {
                 TowerFlyweights[flyweight.GetTowerType()] = flyweight;
+            }
+
+            foreach (var prefab in Resources.FindObjectsOfTypeAll<Tower>())
+            {
+                if (!prefab.name.Contains("(Clone)"))
+                {
+                    TowerPrefabs[prefab.towerType] = prefab;
+                }
             }
         }
 
@@ -37,6 +49,8 @@ namespace RogueTowerResearch
             var researchableCards = availableCards.FindAll(x => x is TowerUpgradeCard upgradeCard && defenderTowerTypes.Contains(upgradeCard.GetTowerType()));
 
             if (researchableCards.Count == 0) return;
+
+            var expandsWereShowing = FindObjectOfType<TileSpawnLocation>() != null;
 
             // Pause just to avoid the weirdness that happens if a wave finishes while we're still selecting research
             _pauseMenu.Pause();
@@ -73,10 +87,9 @@ namespace RogueTowerResearch
                         _cardManager.drawingCards = false;
                         _cardManager.DrawCards(0);
                         _cardManager.drawingCards = false;
-                        // Renable the "Expand" buttons that get hidden when DrawCards is called
-                        foreach (var spawnLocation in Resources.FindObjectsOfTypeAll<TileSpawnLocation>())
+                        if (expandsWereShowing)
                         {
-                            spawnLocation.gameObject.SetActive(true);
+                            _spawnManager.ShowSpawnUIs(true);
                         }
                         _pauseMenu.UnPause();
                     });
@@ -100,6 +113,11 @@ namespace RogueTowerResearch
             {
                 researchGenerator.UpdateResearch();
             }
+        }
+
+        public (float BaseRange, float BonusRange) GetTowerRange(TowerType towerType)
+        {
+            return (TowerPrefabs[towerType].GetBaseRange(), TowerFlyweights[towerType].bonusRange);
         }
     }
 }

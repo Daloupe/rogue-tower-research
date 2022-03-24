@@ -14,7 +14,7 @@ namespace RogueTowerResearch
      * Research can be cancelled, but all research points are lost
      * Technologies currently being researched are taken out of the upgrade pool
      */
-    [BepInPlugin("daloupe.roguetower.roguetowerresearch", "RogueTowerResearch", "0.0.2")]
+    [BepInPlugin("daloupe.roguetower.roguetowerresearch", "RogueTowerResearch", "0.0.3")]
     public class ResearchPlugin : BaseUnityPlugin
     {
         public static ManualLogSource Log;

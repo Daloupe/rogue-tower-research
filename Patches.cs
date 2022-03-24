@@ -25,17 +25,17 @@ namespace RogueTowerResearch
         }
     }
 
-    [HarmonyPatch(typeof(TileManager))]
-    public class TileManagerPatch
+    [HarmonyPatch(typeof(SpawnManager))]
+    public class SpawnManagerPatch
     {
-        [HarmonyPrefix, HarmonyPatch(nameof(TileManager.Awake))]
-        private static void Awake(TileManager __instance)
+        [HarmonyPrefix, HarmonyPatch(nameof(SpawnManager.Awake))]
+        private static void Awake()
         {
             ResearchPlugin.ResearchManager = new GameObject("ResearchManager").AddComponent<ResearchManager>();
         }
 
-        [HarmonyPrefix, HarmonyPatch(nameof(TileManager.SpawnNewTile))]
-        private static void SpawnNewTile(TileManager __instance, int posX, int posY, int eulerAngle)
+        [HarmonyPostfix, HarmonyPatch(nameof(SpawnManager.StartNextWave))]
+        private static void StartNextWave()
         {
             ResearchPlugin.ResearchManager.UpdateResearch();
         }

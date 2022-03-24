@@ -11,19 +11,21 @@ namespace RogueTowerResearch
         public const int COST_OF_RESEARCH = 45;
 
         public House House;
+        private MeshRenderer[] _houseMaterials;
         private IncomeGenerator _incomeGenerator;
         private CardManager _cardManager;
         private ResearchManager _researchManager;
         private TowerUpgradeCard _upgradeCard;
         private TowerType? _towerBeingResearched;
         private int _researchPoints;
-
+        
         private void Awake()
         {
             House = GetComponentInParent<House>();
             _incomeGenerator = GetComponentInParent<IncomeGenerator>();
             _cardManager = FindObjectOfType<CardManager>();
             _researchManager = FindObjectOfType<ResearchManager>();
+            _houseMaterials = House.GetComponentsInChildren<MeshRenderer>();
         }
 
         public HashSet<TowerType> GetDefenderTowerTypes()
@@ -36,28 +38,46 @@ namespace RogueTowerResearch
             return House.GetDefenders().Where(x => x.towerType == _towerBeingResearched);
         }
 
-        public void SetResearch(TowerUpgradeCard upgradeCard)
+        private void RestoreResearchedTowersRange()
         {
             if (_towerBeingResearched.HasValue)
             {
-                var bonusRange = _researchManager.TowerFlyweights[_towerBeingResearched.Value].bonusRange;
+                var (baseRange, bonusRange) = _researchManager.GetTowerRange(_towerBeingResearched.Value);
                 foreach (var defender in GetDefendersBeingResearched())
                 {
-                    defender.baseRange *= 2;
-                    defender.range = defender.GetBaseRange() + bonusRange;
+                    defender.baseRange = baseRange;
+                    defender.range = baseRange + bonusRange;
                 }
             }
+        }
+
+        private void HalveResearchedTowersRange()
+        {
+            if (_towerBeingResearched.HasValue)
+            {
+                var (baseRange, bonusRange) = _researchManager.GetTowerRange(_towerBeingResearched.Value);
+                foreach (var defender in GetDefendersBeingResearched())
+                {
+                    // Hrmm should we increase the halving based on how many houses are researching a tower? Would need to track that somehow :(
+                    defender.baseRange = baseRange / 2;
+                    defender.range = (baseRange + bonusRange) / 2;
+                }
+            }
+        }
+
+        public void SetResearch(TowerUpgradeCard upgradeCard)
+        {
+            RestoreResearchedTowersRange();
             _researchPoints = 0;
             _upgradeCard = upgradeCard;
             _towerBeingResearched = _upgradeCard?.GetTowerType();
             _incomeGenerator.incomeTimesLevel = _upgradeCard is null ? House.GetDefenders().Count : 0;
-            if (_towerBeingResearched.HasValue)
+            HalveResearchedTowersRange();
+            foreach (var houseMaterial in _houseMaterials)
             {
-                foreach (var defender in GetDefendersBeingResearched())
-                {
-                    defender.baseRange /= 2;
-                    defender.range /= 2;
-                }
+                // Could maybe look at changing colors of reserached towers, but probably inefficient to be doing a find all components on defender all the time,
+                // again might be best to at some point at a component that attaches to the towers themselves to keep track of things.
+                houseMaterial.material.color = _towerBeingResearched.HasValue ? new Color(.5f, .5f, .5f, 1) : new Color(1, 1, 1, 1);
             }
         }
 
@@ -71,12 +91,15 @@ namespace RogueTowerResearch
                 _cardManager.GetAvailableCards().AddRange(_upgradeCard.unlocks);
                 SetResearch(null);
             }
+
+            House.SpawnUI();
         }
 
         public void CheckTowers()
         {
             if (_upgradeCard is null) return;
             _incomeGenerator.incomeTimesLevel = 0;
+            HalveResearchedTowersRange();
         }
 
         private int GetResearchPointsThisTurn()
